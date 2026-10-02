@@ -1,0 +1,9 @@
+/* TEAM */
+Autor: Aitor Sánchez Gutiérrez
+Blog: https://aitorsanchez.pages.dev
+Hub: https://aitorhub.vercel.app
+Contacto: https://aitorsanchez.pages.dev/contacto
+
+/* SITE */
+Proyecto: DNI Anticopia
+URL: https://dni-anticopia.kbo1.workers.dev
