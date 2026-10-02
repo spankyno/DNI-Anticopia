@@ -1,7 +1,8 @@
 import React from 'react';
 import { SupportedLanguage } from '../types';
 import { translations } from '../utils/translations';
-import { ShieldCheck, Lock, Cpu, AlertTriangle, CheckCircle2, ShieldAlert, Heart, ExternalLink, Globe, FileCheck, Sparkles } from 'lucide-react';
+import { ShieldCheck, Lock, Cpu, AlertTriangle, CheckCircle2, ShieldAlert, Heart, ExternalLink, Globe, FileCheck, Sparkles, BookOpen, LayoutGrid, Mail, User } from 'lucide-react';
+import { AUTHOR } from '../utils/author';
 
 interface AboutViewProps {
   lang: SupportedLanguage;
@@ -242,6 +243,48 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor }
         </p>
       </section>
 
+      {/* Autor */}
+      <section className="p-6 rounded-3xl border border-slate-800 bg-slate-900/60 space-y-4">
+        <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <User className="w-5 h-5 text-cyan-400" />
+          <span>{lang === 'es' ? 'Sobre el autor' : 'About the author'}</span>
+        </h3>
+        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          {lang === 'es'
+            ? <>DNI Anticopia ha sido creado y mantenido por <strong className="text-white">{AUTHOR.name}</strong> como herramienta gratuita de ciberseguridad ciudadana. Puedes conocer más proyectos, leer el blog o ponerte en contacto a través de estos enlaces.</>
+            : <>DNI Anticopia is created and maintained by <strong className="text-white">{AUTHOR.name}</strong> as a free citizen cybersecurity tool. Find more projects, read the blog or get in touch through the links below.</>}
+        </p>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <a
+            href={AUTHOR.blog}
+            target="_blank"
+            rel="author noopener"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-700 bg-slate-950/70 text-slate-200 hover:border-cyan-500/60 hover:text-cyan-300 transition"
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>{lang === 'es' ? 'Blog de Aitor' : "Aitor's Blog"}</span>
+          </a>
+          <a
+            href={AUTHOR.hub}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-700 bg-slate-950/70 text-slate-200 hover:border-cyan-500/60 hover:text-cyan-300 transition"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            <span>Aitor Hub</span>
+          </a>
+          <a
+            href={AUTHOR.contact}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-700 bg-slate-950/70 text-slate-200 hover:border-cyan-500/60 hover:text-cyan-300 transition"
+          >
+            <Mail className="w-4 h-4" />
+            <span>{lang === 'es' ? 'Contacto' : 'Contact'}</span>
+          </a>
+        </div>
+      </section>
+
       {/* 5. Créditos y Disclaimer Legal */}
       <section className="pt-6 border-t border-slate-800 space-y-4">
         <div className="p-6 rounded-2xl border border-slate-800/80 bg-slate-950/80 text-xs text-slate-400 space-y-3">
@@ -256,7 +299,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor }
               <span>{t.creditsText}</span>
             </div>
             <div className="text-[11px] text-slate-400">
-              <span>DNI Anticopia v1.0 • PWA Standalone • Client-Side</span>
+              <span>DNI Anticopia v1.0 • {AUTHOR.name} • PWA Standalone • Client-Side</span>
             </div>
           </div>
         </div>

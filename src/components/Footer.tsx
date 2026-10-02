@@ -1,7 +1,8 @@
 import React from 'react';
 import { SupportedLanguage } from '../types';
 import { translations } from '../utils/translations';
-import { ShieldCheck, Lock, Heart, FileCheck, Smartphone } from 'lucide-react';
+import { ShieldCheck, Lock, Heart, BookOpen, LayoutGrid, Mail, User } from 'lucide-react';
+import { AUTHOR } from '../utils/author';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface FooterProps {
@@ -15,7 +16,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
   return (
     <footer className="w-full border-t border-slate-800/80 bg-[#060911] text-slate-400 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Col 1: Brand */}
           <div className="space-y-3 md:col-span-2">
             <div className="flex items-center gap-2">
@@ -78,7 +79,53 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
             </ul>
           </div>
 
-          {/* Col 3: PWA & Security */}
+          {/* Col 3: Autor y enlaces */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+              {lang === 'es' ? 'Autor' : 'Author'}
+            </h4>
+            <p className="flex items-center gap-1.5 text-xs text-slate-300">
+              <User className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{AUTHOR.name}</span>
+            </p>
+            <ul className="space-y-1.5 text-xs">
+              <li>
+                <a
+                  href={AUTHOR.blog}
+                  target="_blank"
+                  rel="author noopener"
+                  className="inline-flex items-center gap-1.5 hover:text-cyan-400 transition"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>{lang === 'es' ? 'Blog' : 'Blog'}</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href={AUTHOR.hub}
+                  target="_blank"
+                  rel="noopener"
+                  className="inline-flex items-center gap-1.5 hover:text-cyan-400 transition"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Aitor Hub</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href={AUTHOR.contact}
+                  target="_blank"
+                  rel="noopener"
+                  className="inline-flex items-center gap-1.5 hover:text-cyan-400 transition"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>{lang === 'es' ? 'Contacto' : 'Contact'}</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Col 4: PWA & Security */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider">
               {lang === 'es' ? 'Instalación PWA' : 'PWA Install'}
@@ -101,7 +148,19 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
           </p>
           <div className="flex items-center gap-1.5 shrink-0 text-slate-400 text-xs">
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/20" />
-            <span>{t.creditsText}</span>
+            <span>
+              {t.creditsText}{' '}
+              {lang === 'es' ? 'Por' : 'By'}{' '}
+              <a
+                href={AUTHOR.blog}
+                target="_blank"
+                rel="author noopener"
+                className="text-slate-300 hover:text-cyan-400 transition font-semibold"
+              >
+                {AUTHOR.name}
+              </a>
+              .
+            </span>
           </div>
         </div>
       </div>
