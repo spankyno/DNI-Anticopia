@@ -12,6 +12,15 @@ import { renderProtectedDocument, generateSampleDNICanvas } from '../utils/water
 import { getPresetRedactions } from '../utils/dniPresets';
 import { exportDocumentsToPdf } from '../utils/pdfExport';
 import { saveToVault } from '../utils/db';
+import {
+  MAX_FILES_PER_BATCH,
+  MAX_FILE_BYTES,
+  MAX_IMAGE_SIDE,
+  checkImageDimensions,
+  precheckImageFile,
+  sanitizeFileName,
+  type FileRejection,
+} from '../utils/fileValidation';
 import { RedactionCanvas } from './RedactionCanvas';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import confetti from 'canvas-confetti';
@@ -141,11 +150,38 @@ export const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
 
   const processUploadedFiles = async (files: File[]) => {
     const newDocs: DocumentItem[] = [];
+    const rejected: { name: string; reason: RejectionReason }[] = [];
+
+    // Límite de archivos por lote
+    if (files.length > MAX_FILES_PER_BATCH) {
+      rejected.push({ name: `+${files.length - MAX_FILES_PER_BATCH}`, reason: 'too_many' });
+      files = files.slice(0, MAX_FILES_PER_BATCH);
+    }
 
     for (const file of files) {
-      if (file.type.startsWith('image/')) {
+      if (file.type === 'application/pdf') {
+        rejected.push({ name: file.name, reason: 'pdf' });
+        continue;
+      }
+
+      try {
+        // 1) Tamaño y formato REAL (cabecera), no solo el MIME declarado
+        const pre = await precheckImageFile(file);
+        if (pre) {
+          rejected.push({ name: file.name, reason: pre });
+          continue;
+        }
+
+        // 2) Debe decodificarse como imagen de verdad
         const dataUrl = await readFileAsDataUrl(file);
         const img = await loadImage(dataUrl);
+
+        // 3) Dimensiones razonables
+        const dim = checkImageDimensions(img.width, img.height);
+        if (dim) {
+          rejected.push({ name: file.name, reason: dim });
+          continue;
+        }
 
         // Auto detect if ratio matches ID card (~1.58)
         const ratio = img.width / img.height;
@@ -167,19 +203,18 @@ export const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
           config: { ...DEFAULT_CONFIG },
           status: 'idle',
         });
-      } else if (file.type === 'application/pdf') {
-        // For PDF documents in client, convert first page to canvas representation
-        alert(
-          lang === 'es'
-            ? 'Para un procesamiento óptimo de documentos de identidad, se recomienda subir formato imagen (JPG/PNG). Si tienes un PDF de varias páginas, puedes convertir sus hojas a imagen o descargarlo tras protegerlo como PDF oficial.'
-            : 'For optimal client-side watermark protection, image files (JPG/PNG) are recommended.'
-        );
+      } catch {
+        rejected.push({ name: file.name, reason: 'corrupt' });
       }
     }
 
     if (newDocs.length > 0) {
       setDocuments((prev) => [...prev, ...newDocs]);
       setActiveIndex(documents.length); // switch to first new doc
+    }
+
+    if (rejected.length > 0) {
+      alert(buildRejectionMessage(rejected, lang));
     }
   };
 
@@ -323,7 +358,7 @@ export const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
       try {
         const res = await fetch(activeDoc.processedDataUrl);
         const blob = await res.blob();
-        const file = new File([blob], `protegido-${activeDoc.name}`, { type: 'image/png' });
+        const file = new File([blob], `protegido-${sanitizeFileName(activeDoc.name)}`, { type: 'image/png' });
 
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
@@ -1158,6 +1193,36 @@ export const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
 };
 
 // Helpers
+type RejectionReason = FileRejection | 'pdf' | 'too_many';
+
+function buildRejectionMessage(
+  rejected: { name: string; reason: RejectionReason }[],
+  lang: SupportedLanguage
+): string {
+  const es = lang === 'es';
+  const mb = Math.round(MAX_FILE_BYTES / (1024 * 1024));
+  const text: Record<RejectionReason, string> = {
+    too_large: es ? `supera el máximo de ${mb} MB` : `exceeds the ${mb} MB limit`,
+    empty: es ? 'el archivo está vacío' : 'the file is empty',
+    unsupported: es ? 'formato no admitido (usa JPG, PNG o WebP)' : 'unsupported format (use JPG, PNG or WebP)',
+    corrupt: es ? 'no se pudo leer como imagen' : 'could not be read as an image',
+    dimensions: es
+      ? `dimensiones excesivas (máx. ${MAX_IMAGE_SIDE} px por lado)`
+      : `dimensions too large (max ${MAX_IMAGE_SIDE} px per side)`,
+    pdf: es
+      ? 'los PDF no se procesan; conviértelo a imagen (JPG/PNG) antes de subirlo'
+      : 'PDFs are not processed; convert it to an image (JPG/PNG) first',
+    too_many: es
+      ? `se admiten ${MAX_FILES_PER_BATCH} archivos por lote; el resto se ignoró`
+      : `${MAX_FILES_PER_BATCH} files per batch maximum; the rest were ignored`,
+  };
+  const head = es ? 'Algunos archivos no se pudieron añadir:' : 'Some files could not be added:';
+  const lines = rejected.map((r) =>
+    r.reason === 'too_many' ? `• ${text[r.reason]}` : `• ${r.name}: ${text[r.reason]}`
+  );
+  return `${head}\n${lines.join('\n')}`;
+}
+
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

@@ -16,7 +16,12 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   lang,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  // El stream vive en un ref (no en estado) para que el cleanup del efecto siempre
+  // pare la cámara real, y no una copia obsoleta capturada en un render anterior.
+  const streamRef = useRef<MediaStream | null>(null);
+  // Identifica la última petición de cámara; si el permiso llega tarde (modal ya
+  // cerrado o petición reemplazada), ese stream se descarta y se detiene.
+  const requestIdRef = useRef(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
@@ -24,6 +29,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   // Start camera stream when modal opens
   useEffect(() => {
     if (!isOpen) {
+      requestIdRef.current += 1;
       stopStream();
       setCapturedDataUrl(null);
       setErrorMsg(null);
@@ -33,6 +39,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     startCamera();
 
     return () => {
+      requestIdRef.current += 1;
       stopStream();
     };
   }, [isOpen, facingMode]);
@@ -40,6 +47,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   const startCamera = async () => {
     stopStream();
     setErrorMsg(null);
+    const requestId = ++requestIdRef.current;
 
     try {
       const constraints: MediaStreamConstraints = {
@@ -52,12 +60,21 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       };
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      setStream(mediaStream);
+
+      // Si mientras esperaba el permiso se cerró el modal o se pidió otra cámara,
+      // este stream ya no se necesita: se apaga de inmediato.
+      if (requestId !== requestIdRef.current) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      streamRef.current = mediaStream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error('Camera access error:', err);
       setErrorMsg(
         lang === 'es'
@@ -68,9 +85,12 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   };
 
   const stopStream = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
   };
 

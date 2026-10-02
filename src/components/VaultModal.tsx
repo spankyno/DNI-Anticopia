@@ -4,6 +4,7 @@ import { clearVault, deleteVaultItem } from '../utils/db';
 import { translations } from '../utils/translations';
 import { FolderLock, Trash2, Download, ExternalLink, X, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { exportDocumentsToPdf } from '../utils/pdfExport';
+import { sanitizeFileName } from '../utils/fileValidation';
 
 interface VaultModalProps {
   isOpen: boolean;
@@ -43,7 +44,7 @@ export const VaultModal: React.FC<VaultModalProps> = ({
   const handleDownloadItem = (item: VaultItem) => {
     const a = document.createElement('a');
     a.href = item.dataUrl;
-    a.download = `protegido-${item.name.replace(/\.[^/.]+$/, '')}.png`;
+    a.download = `protegido-${sanitizeFileName(item.name.replace(/\.[^/.]+$/, ''), 'documento')}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -52,7 +53,7 @@ export const VaultModal: React.FC<VaultModalProps> = ({
   const handleExportPdf = async (item: VaultItem) => {
     await exportDocumentsToPdf({
       dataUrls: [item.dataUrl],
-      filename: `protegido-${item.name.replace(/\.[^/.]+$/, '')}.pdf`,
+      filename: `protegido-${sanitizeFileName(item.name.replace(/\.[^/.]+$/, ''), 'documento')}.pdf`,
       mode: 'id1_standard',
     });
   };
