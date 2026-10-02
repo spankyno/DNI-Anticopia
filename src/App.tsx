@@ -35,6 +35,11 @@ export default function App() {
     refreshVault();
   }, []);
 
+  // Mantener el atributo lang del documento sincronizado con el idioma de la interfaz
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   const handleStartProtect = () => {
     setCurrentTab('editor');
     // Scroll down to editor area smoothly
