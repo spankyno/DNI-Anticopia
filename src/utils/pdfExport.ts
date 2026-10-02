@@ -16,7 +16,9 @@ export async function exportDocumentsToPdf({
 }: ExportPdfOptions): Promise<void> {
   if (!dataUrls.length) return;
 
-  const pdfDoc = await PDFDocument.create();
+  // Sin metadatos: pdf-lib por defecto escribe Producer/Creator ("pdf-lib") y fechas de
+  // creación/modificación. Se desactiva para no dejar rastro de herramienta ni de fecha.
+  const pdfDoc = await PDFDocument.create({ updateMetadata: false });
 
   // 1 mm = 2.83464567 points in PDF coordinate space
   const MM_TO_PT = 2.83464567;

@@ -157,22 +157,45 @@ function renderRedactions(
       ctx.lineWidth = 1.5;
       ctx.strokeRect(rx, ry, rw, rh);
     } else if (box.style === 'blur') {
-      // Pixelated blur effect
-      const sampleSize = Math.max(8, Math.floor(Math.min(rw, rh) / 8));
-      const boxData = ctx.getImageData(rx, ry, rw, rh);
-      const data = boxData.data;
-      const bw = Math.floor(rw);
-      const bh = Math.floor(rh);
+      // Censura "esmerilada" IRREVERSIBLE.
+      // Un pixelado clásico conserva información de la imagen original en cada bloque y
+      // puede reconstruirse parcialmente con herramientas de ML. Aquí cada bloque se rellena
+      // con el color MEDIO de toda la zona más una variación pseudoaleatoria que no depende
+      // de la imagen: del contenido original solo sobrevive un único color medio.
+      const x0 = Math.max(0, Math.floor(rx));
+      const y0 = Math.max(0, Math.floor(ry));
+      const x1 = Math.min(width, Math.ceil(rx + rw));
+      const y1 = Math.min(height, Math.ceil(ry + rh));
+      const bw = x1 - x0;
+      const bh = y1 - y0;
 
-      for (let y = 0; y < bh; y += sampleSize) {
-        for (let x = 0; x < bw; x += sampleSize) {
-          const p = (y * bw + x) * 4;
-          const r = data[p];
-          const g = data[p + 1];
-          const b = data[p + 2];
+      if (bw > 0 && bh > 0) {
+        const data = ctx.getImageData(x0, y0, bw, bh).data;
+        let sumR = 0;
+        let sumG = 0;
+        let sumB = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          sumR += data[i];
+          sumG += data[i + 1];
+          sumB += data[i + 2];
+        }
+        const n = bw * bh;
+        const meanR = sumR / n;
+        const meanG = sumG / n;
+        const meanB = sumB / n;
 
-          ctx.fillStyle = `rgb(${r},${g},${b})`;
-          ctx.fillRect(rx + x, ry + y, sampleSize, sampleSize);
+        const block = Math.max(8, Math.floor(Math.min(bw, bh) / 6));
+        // Semilla derivada del id de la caja (no de la imagen): resultado estable entre
+        // renders, sin parpadeo en la vista previa.
+        const rand = createSeededRandom(box.id);
+        const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+
+        for (let y = 0; y < bh; y += block) {
+          for (let x = 0; x < bw; x += block) {
+            const jitter = (rand() - 0.5) * 48;
+            ctx.fillStyle = `rgb(${clamp(meanR + jitter)},${clamp(meanG + jitter)},${clamp(meanB + jitter)})`;
+            ctx.fillRect(x0 + x, y0 + y, Math.min(block, bw - x), Math.min(block, bh - y));
+          }
         }
       }
 
@@ -184,6 +207,26 @@ function renderRedactions(
 
     ctx.restore();
   }
+}
+
+/**
+ * PRNG determinista (mulberry32) sembrado con un texto. Se usa solo para el relleno de la
+ * censura "blur"; no depende en ningún caso del contenido de la imagen.
+ */
+function createSeededRandom(seed: string): () => number {
+  let h = 1779033703 ^ seed.length;
+  for (let i = 0; i < seed.length; i++) {
+    h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  let a = h >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 /**

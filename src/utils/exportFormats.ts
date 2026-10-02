@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { exportDocumentsToPdf } from './pdfExport';
+import { sanitizeFileName, uniqueName } from './fileValidation';
 
 export type ExportFormatType = 
   | 'png'
@@ -88,7 +89,7 @@ export async function exportInFormat({
   format,
   allDocsDataUrls = [],
 }: MultiExportOptions): Promise<void> {
-  const cleanBase = filenameBase.replace(/\.[^/.]+$/, '').trim() || 'documento-protegido';
+  const cleanBase = sanitizeFileName(filenameBase.replace(/\.[^/.]+$/, ''), 'documento-protegido');
 
   switch (format) {
     case 'png': {
@@ -147,9 +148,15 @@ export async function exportInFormat({
 
       // If batch docs provided, zip all docs in batch!
       if (allDocsDataUrls.length > 1) {
+        const usedNames = new Set<string>();
         for (let i = 0; i < allDocsDataUrls.length; i++) {
           const item = allDocsDataUrls[i];
-          const itemBase = item.name.replace(/\.[^/.]+$/, '') || `doc-${i + 1}`;
+          // Nombre saneado y único: evita rutas con "../" y que dos archivos
+          // con el mismo nombre se sobrescriban dentro del ZIP.
+          const itemBase = uniqueName(
+            sanitizeFileName(item.name.replace(/\.[^/.]+$/, ''), `doc-${i + 1}`),
+            usedNames
+          );
           const pngRes = await convertDataUrlToFormat(item.dataUrl, 'image/png');
           const webpRes = await convertDataUrlToFormat(item.dataUrl, 'image/webp', 0.9);
           const jpgRes = await convertDataUrlToFormat(item.dataUrl, 'image/jpeg', 0.9);
