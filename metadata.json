@@ -1,6 +1,7 @@
 {
   "name": "DNI Anticopia - Protector Inteligente de Documentos y DNI",
   "description": "Protege tu DNI, pasaporte y documentos confidenciales con marcas de agua onduladas anti-IA, redacción inteligente y procesamiento 100% privado en tu navegador.",
-  "requestFramePermissions": ["camera"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "requestFramePermissions": [
+    "camera"
+  ]
 }

@@ -1,20 +1,23 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# DNI Anticopia
 
-# Run and deploy your AI Studio app
+Protege tu DNI, pasaporte y documentos con marcas de agua onduladas anti-IA y censura de datos
+sensibles. Todo el procesamiento se ejecuta en tu navegador.
 
-This contains everything you need to run your app locally.
+Autor: [Aitor Sánchez Gutiérrez](https://aitorsanchez.pages.dev)
 
-View your app in AI Studio: https://ai.studio/apps/ceb0480b-8375-42d1-a842-e9cc3b586383
+## Desarrollo
 
-## Run Locally
+```bash
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # genera ./dist
+npm run lint     # comprobación de tipos
+npm run audit:prod
+```
 
-**Prerequisites:**  Node.js
+`npm run icons` regenera los iconos PWA de `public/` (requiere Node 22.18+ o 24).
 
+## Despliegue
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Cloudflare Workers con assets estáticos (`wrangler.json`, directorio `./dist`).
+Mantén `package.json` y `package-lock.json` sincronizados: el despliegue usa `npm ci`.
