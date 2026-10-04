@@ -11,7 +11,8 @@ import { translations } from '../utils/translations';
 import { renderProtectedDocument, generateSampleDNICanvas } from '../utils/watermark';
 import { getPresetRedactions } from '../utils/dniPresets';
 import { exportDocumentsToPdf } from '../utils/pdfExport';
-import { saveToVault } from '../utils/db';
+import { saveToVault, isVaultUnlocked, VaultLockedError } from '../utils/db';
+import { makeThumbnail } from '../utils/vaultThumb';
 import {
   MAX_FILES_PER_BATCH,
   MAX_FILE_BYTES,
@@ -50,10 +51,13 @@ import {
 } from 'lucide-react';
 import { exportInFormat, ExportFormatType } from '../utils/exportFormats';
 
+let confettiMainThread: ReturnType<typeof confetti.create> | null = null;
+
 interface DocumentProcessorProps {
   lang: SupportedLanguage;
   onRefreshVault: () => void;
-  onOpenVault: () => void;
+  /** `pending`: documento a guardar cuando la bóveda esté desbloqueada. */
+  onOpenVault: (pending?: VaultItem) => void;
   initialSample?: boolean;
 }
 
@@ -328,6 +332,14 @@ export const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
   const handleSaveToVault = async () => {
     if (!activeDoc) return;
 
+    // Miniatura ligera para la lista: así listar la bóveda no obliga a descifrar la imagen completa
+    let thumbnail = activeDoc.processedDataUrl;
+    try {
+      thumbnail = await makeThumbnail(activeDoc.processedDataUrl);
+    } catch {
+      /* se usa la imagen completa como miniatura */
+    }
+
     const vaultItem: VaultItem = {
       id: `vault-${Date.now()}`,
       name: activeDoc.name,
@@ -338,13 +350,28 @@ export const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
         year: 'numeric',
       }),
       timestamp: Date.now(),
-      thumbnail: activeDoc.processedDataUrl,
+      thumbnail,
       dataUrl: activeDoc.processedDataUrl,
       fileSizeFormatted: `${Math.round(activeDoc.processedDataUrl.length / 1024)} KB`,
       purpose: activeDoc.config.text,
     };
 
-    await saveToVault(vaultItem);
+    // Bóveda bloqueada o aún sin crear: se abre el modal y el documento se guarda al desbloquear.
+    if (!isVaultUnlocked()) {
+      onOpenVault(vaultItem);
+      return;
+    }
+
+    try {
+      await saveToVault(vaultItem);
+    } catch (err) {
+      if (err instanceof VaultLockedError) {
+        onOpenVault(vaultItem); // se bloqueó por inactividad justo ahora
+        return;
+      }
+      console.error('Vault save error:', err);
+      return;
+    }
     onRefreshVault();
 
     setVaultToast(true);
@@ -389,7 +416,12 @@ export const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
 
   const triggerConfetti = () => {
     try {
-      confetti({
+      // Instancia sin Web Worker: la de confetti() por defecto crea un Worker desde una URL blob:,
+      // que una CSP estricta (worker-src 'self') bloquea. Para una ráfaga corta basta el hilo principal.
+      if (!confettiMainThread) {
+        confettiMainThread = confetti.create(undefined, { resize: true, useWorker: false });
+      }
+      confettiMainThread({
         particleCount: 60,
         spread: 70,
         origin: { y: 0.8 },
@@ -426,7 +458,7 @@ export const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
           <ShieldCheck className="w-5 h-5 text-emerald-400" />
           <span>{t.savedVaultSuccess}</span>
           <button
-            onClick={onOpenVault}
+            onClick={() => onOpenVault()}
             className="ml-2 underline text-white font-bold cursor-pointer"
           >
             Abrir Bóveda

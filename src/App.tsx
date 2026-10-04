@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { SupportedLanguage, VaultItem } from './types';
-import { getVaultItems } from './utils/db';
+import { getVaultCount } from './utils/db';
 import { Header } from './components/Header';
 import { HeroDemo } from './components/HeroDemo';
 import { DocumentProcessor } from './components/DocumentProcessor';
@@ -13,19 +13,44 @@ import { VaultModal } from './components/VaultModal';
 import { AboutView } from './components/AboutView';
 import { Footer } from './components/Footer';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { ConsentBanner } from './components/ConsentBanner';
+import { ConsentChoice, getConsent, initAnalytics, setConsent } from './utils/analytics';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<'editor' | 'vault' | 'security' | 'about'>('editor');
   const [lang, setLang] = useState<SupportedLanguage>('es');
-  const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
+  const [vaultCount, setVaultCount] = useState<number>(0);
+  // Documento recién protegido que espera a que se cree/desbloquee la bóveda para guardarse
+  const [pendingVaultItem, setPendingVaultItem] = useState<VaultItem | null>(null);
   const [isVaultModalOpen, setIsVaultModalOpen] = useState<boolean>(false);
   const [autoLoadSample, setAutoLoadSample] = useState<boolean>(false);
 
-  // Load vault items from local IndexedDB
+  // Consentimiento de analítica: el tracker no se carga hasta que el visitante acepta
+  const [consent, setConsentState] = useState<ConsentChoice | null>(() => getConsent());
+  const [bannerOpen, setBannerOpen] = useState<boolean>(() => getConsent() === null);
+
+  useEffect(() => {
+    initAnalytics();
+  }, []);
+
+  const handleConsent = (choice: ConsentChoice) => {
+    setConsent(choice);
+    setConsentState(choice);
+    setBannerOpen(false);
+  };
+
+  const goToPrivacy = () => {
+    setCurrentTab('about');
+    // Esperar a que AboutView se monte antes de desplazar
+    setTimeout(() => {
+      document.getElementById('privacidad')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  };
+
+  // Nº de documentos guardados (no requiere desbloquear la bóveda: no se descifra nada)
   const refreshVault = async () => {
     try {
-      const items = await getVaultItems();
-      setVaultItems(items);
+      setVaultCount(await getVaultCount());
     } catch (e) {
       console.error('Failed to load vault items:', e);
     }
@@ -75,7 +100,7 @@ export default function App() {
         }}
         lang={lang}
         setLang={setLang}
-        vaultCount={vaultItems.length}
+        vaultCount={vaultCount}
       />
 
       {/* Main Body */}
@@ -94,7 +119,10 @@ export default function App() {
               <DocumentProcessor
                 lang={lang}
                 onRefreshVault={refreshVault}
-                onOpenVault={() => setIsVaultModalOpen(true)}
+                onOpenVault={(pending) => {
+                  setPendingVaultItem(pending ?? null);
+                  setIsVaultModalOpen(true);
+                }}
                 initialSample={autoLoadSample}
               />
             </div>
@@ -105,6 +133,8 @@ export default function App() {
           <AboutView
             lang={lang}
             onNavigateToEditor={() => setCurrentTab('editor')}
+            consent={consent}
+            onOpenConsent={() => setBannerOpen(true)}
           />
         )}
       </main>
@@ -113,14 +143,27 @@ export default function App() {
       <VaultModal
         isOpen={isVaultModalOpen}
         onClose={() => setIsVaultModalOpen(false)}
-        vaultItems={vaultItems}
         onRefreshVault={refreshVault}
         lang={lang}
+        pendingItem={pendingVaultItem}
+        onPendingConsumed={() => setPendingVaultItem(null)}
       />
+
+      {/* Banner de consentimiento de analítica */}
+      {bannerOpen && (
+        <ConsentBanner
+          lang={lang}
+          current={consent}
+          onChoose={handleConsent}
+          onMoreInfo={goToPrivacy}
+        />
+      )}
 
       {/* Footer */}
       <Footer
         lang={lang}
+        onPrivacy={goToPrivacy}
+        onConsentPrefs={() => setBannerOpen(true)}
         onNavigate={(tab) => {
           if (tab === 'vault') {
             setIsVaultModalOpen(true);

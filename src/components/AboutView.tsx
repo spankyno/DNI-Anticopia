@@ -3,14 +3,18 @@ import { SupportedLanguage } from '../types';
 import { translations } from '../utils/translations';
 import { ShieldCheck, Lock, Cpu, AlertTriangle, CheckCircle2, ShieldAlert, Heart, ExternalLink, Globe, FileCheck, Sparkles, BookOpen, LayoutGrid, Mail, User } from 'lucide-react';
 import { AUTHOR } from '../utils/author';
+import { ConsentChoice } from '../utils/analytics';
 
 interface AboutViewProps {
   lang: SupportedLanguage;
   onNavigateToEditor: () => void;
+  consent?: ConsentChoice | null;
+  onOpenConsent?: () => void;
 }
 
-export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor }) => {
+export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor, consent = null, onOpenConsent }) => {
   const t = translations[lang];
+  const es = lang === 'es';
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-12 text-slate-200">
@@ -50,7 +54,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor }
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">
-              {lang === 'es' ? '1. Privacidad Absoluta: 100% Procesado en tu Dispositivo' : '1. Absolute Privacy: 100% Client-Side Processing'}
+              {lang === 'es' ? '1. Privacidad por Diseño: 100% Procesado en tu Dispositivo' : '1. Privacy by Design: 100% Client-Side Processing'}
             </h2>
             <p className="text-xs text-slate-400">
               {lang === 'es' ? 'Tus documentos nunca tocan ningún servidor' : 'Your documents never touch any server'}
@@ -66,8 +70,8 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor }
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
               {lang === 'es'
-                ? 'DNI Anticopia no dispone de almacenamiento remoto ni bases de datos en la nube. Todas las operaciones de cálculo de ondas, dibujo y exportación se ejecutan en la memoria RAM de tu navegador (HTML5 Canvas y WebAssembly).'
-                : 'DNI Anticopia has no remote storage or cloud databases. All wave calculations and exports execute purely in your browser RAM.'}
+                ? 'DNI Anticopia no sube tus documentos a ningún servidor ni los guarda en la nube. Todas las operaciones de cálculo de ondas, dibujo y exportación se ejecutan en la memoria de tu navegador (HTML5 Canvas).'
+                : 'DNI Anticopia never uploads your documents or stores them in the cloud. All wave calculations, drawing and exports run in your browser memory (HTML5 Canvas).'}
             </p>
           </div>
 
@@ -105,7 +109,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor }
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">
-              {lang === 'es' ? '2. ¿Por qué la Marca de Agua Ondulada es Inmune al Borrado por IA?' : '2. Why Undulating Watermarks Defeat AI Erasers'}
+              {lang === 'es' ? '2. ¿Por qué la Marca de Agua Ondulada Dificulta el Borrado por IA?' : '2. Why Undulating Watermarks Make AI Erasing Harder'}
             </h2>
             <p className="text-xs text-slate-400">
               {lang === 'es' ? 'Tecnología matemática inspirada en billetes bancarios e isolíneas' : 'Mathematical security inspired by banknote guilloché'}
@@ -137,7 +141,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor }
                 {lang === 'es' ? 'Marca Ondulada DNI Anticopia (Resistente a IA)' : 'DNI Anticopia Undulating Wave (AI-Resistant)'}
               </h4>
               <p className="text-xs text-slate-400">
-                Deformación senoidal continua, isolíneas guilloché multicolores y micro-tramas de interferencia. Si una IA intenta eliminarla, destruye la coherencia espacial de las letras del DNI y genera un borrón evidente que delata la falsificación ante cualquier verificación.
+                Deformación senoidal continua, isolíneas guilloché multicolores y micro-tramas de interferencia. Si una IA intenta eliminarla, suele alterar la coherencia espacial de las letras del documento y dejar artefactos visibles, lo que dificulta hacer pasar una versión manipulada por auténtica.
               </p>
             </div>
           </div>
@@ -153,7 +157,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor }
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
                 <span className="font-bold text-cyan-300 block mb-1">Micro-impresión Esteganográfica</span>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
-                  Micro-texto de 7-8 píxeles distribuido en filas desfasadas ("DNI ANTICOPIA • NO VÁLIDO PARA CRÉDITOS"). A simple vista parece una trama suave, pero los modelos de difusión de IA no pueden sintetizar caracteres legibles en esa escala.
+                  Micro-texto de 7-8 píxeles distribuido en filas desfasadas ("DNI ANTICOPIA • NO VÁLIDO PARA CRÉDITOS"). A simple vista parece una trama suave, y a esa escala los modelos de difusión de IA suelen tener dificultades para reproducir caracteres legibles.
                 </p>
               </div>
 
@@ -238,9 +242,126 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor }
         </h3>
         <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
           {lang === 'es'
-            ? 'Cuando editas una foto en un editor genérico (como la app de fotos del móvil), muchas veces la marca de agua solo cubre una pequeña esquina o deja intactos los metadatos EXIF. Además, las líneas rectas simples son triviales de eliminar con un borrador mágico de un smartphone moderno. DNI Anticopia aplica matemáticas de ondulación vectoriales continuas y exporta un archivo aplanado sin metadatos residuales que garantice la no reutilización.'
+            ? 'Cuando editas una foto en un editor genérico (como la app de fotos del móvil), muchas veces la marca de agua solo cubre una pequeña esquina o deja intactos los metadatos EXIF. Además, las líneas rectas simples son triviales de eliminar con un borrador mágico de un smartphone moderno. DNI Anticopia aplica matemáticas de ondulación vectoriales continuas y exporta un archivo aplanado sin metadatos residuales, lo que desalienta su reutilización.'
             : 'Standard phone markup tools draw simple flat strokes that modern phone AI can remove in 1 tap. DNI Anticopia flattens continuous vector ripples across the entirety of the document and strips residual metadata.'}
         </p>
+      </section>
+
+      {/* Privacidad y datos */}
+      <section id="privacidad" className="space-y-4 scroll-mt-24">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">{es ? 'Privacidad y datos' : 'Privacy and data'}</h2>
+            <p className="text-xs text-slate-400">
+              {es ? 'Qué sale de tu dispositivo y qué no' : 'What leaves your device and what does not'}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-2">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>{es ? 'Tus documentos' : 'Your documents'}</span>
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              {es
+                ? 'Las imágenes se procesan en la memoria de tu navegador y nunca se envían a ningún servidor. Si usas la bóveda, se guardan cifradas (AES-256-GCM) en este navegador y solo se descifran con tu contraseña.'
+                : 'Images are processed in your browser memory and are never sent to any server. If you use the vault, they are stored encrypted (AES-256-GCM) in this browser and only decrypted with your password.'}
+            </p>
+          </div>
+
+          <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-2">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Globe className="w-4 h-4 text-cyan-400" />
+              <span>{es ? 'Analítica de visitas (solo si la aceptas)' : 'Visit analytics (only if you accept)'}</span>
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              {es
+                ? 'Si aceptas, al cargar la página se envía a un servidor del autor: tu dirección IP (que recibe cualquier servidor al conectarte), el nombre de la aplicación, la ruta de la página y la hora. No se envían tus documentos, su contenido ni los nombres de tus archivos.'
+                : 'If you accept, when the page loads the author’s server receives: your IP address (which any server receives when you connect), the application name, the page path and the time. Your documents, their content and your file names are not sent.'}
+            </p>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              {es
+                ? 'Finalidad: contar visitas. Base jurídica: tu consentimiento, que puedes retirar cuando quieras. Conservación: solo el tiempo necesario para las estadísticas. Responsable: '
+                : 'Purpose: counting visits. Legal basis: your consent, which you can withdraw at any time. Retention: only as long as needed for statistics. Controller: '}
+              <a href={AUTHOR.contact} target="_blank" rel="noopener" className="text-cyan-300 hover:text-cyan-200 underline underline-offset-2">
+                {AUTHOR.name}
+              </a>
+              .
+            </p>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              {es
+                ? 'Puedes ejercer tus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad a través del formulario de contacto, y reclamar ante la '
+                : 'You can exercise your rights of access, rectification, erasure, objection, restriction and portability through the contact form, and lodge a complaint with the '}
+              <a href="https://www.aepd.es" target="_blank" rel="noopener" className="text-cyan-300 hover:text-cyan-200 underline underline-offset-2">
+                AEPD
+              </a>
+              .
+            </p>
+          </div>
+
+          <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-2">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Lock className="w-4 h-4 text-cyan-400" />
+              <span>{es ? 'Sin cookies ni servicios de terceros' : 'No cookies or third-party services'}</span>
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              {es
+                ? 'La app no usa cookies. En tu navegador solo se guarda tu elección sobre la analítica (para no volver a preguntarte) y, si la creas, tu bóveda cifrada. Las tipografías se sirven desde la propia app, sin conexión a Google. La app y las estadísticas se alojan en Cloudflare, como proveedor de infraestructura. Los enlaces al blog, al Hub y al contacto del autor llevan a sitios externos con su propia política.'
+                : 'The app does not use cookies. Your browser only stores your analytics choice (so you are not asked again) and, if you create it, your encrypted vault. Fonts are served from the app itself, with no connection to Google. The app and the statistics are hosted on Cloudflare as an infrastructure provider. Links to the author’s blog, Hub and contact lead to external sites with their own policies.'}
+            </p>
+          </div>
+
+          <div className="p-5 rounded-2xl border border-amber-900/40 bg-amber-950/10 space-y-2">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <span>{es ? 'Alcance y límites' : 'Scope and limits'}</span>
+            </h3>
+            <ul className="text-xs text-slate-400 leading-relaxed space-y-1.5 list-disc pl-4">
+              <li>
+                {es
+                  ? 'La marca de agua ondulada dificulta y desalienta el uso indebido del documento, pero ninguna técnica puede impedir por completo que alguien intente eliminarla.'
+                  : 'The undulating watermark makes misuse harder and discourages it, but no technique can completely prevent someone from trying to remove it.'}
+              </li>
+              <li>
+                {es
+                  ? 'La bóveda cifrada protege tus copias si alguien accede a este dispositivo. No protege si el dispositivo ya tiene malware o si eliges una contraseña débil, y si la olvidas no hay forma de recuperar los datos.'
+                  : 'The encrypted vault protects your copies if someone gets access to this device. It does not protect against malware already on the device or a weak password, and if you forget the password the data cannot be recovered.'}
+              </li>
+              <li>
+                {es
+                  ? 'Lo que descargues o envíes fuera de la app deja de estar bajo la protección de la bóveda.'
+                  : 'What you download or send outside the app is no longer covered by the vault.'}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl border border-slate-800 bg-slate-900/40 text-xs">
+          <p className="text-slate-300">
+            {es ? 'Tu elección sobre la analítica: ' : 'Your analytics choice: '}
+            <strong className="text-white">
+              {consent === 'granted'
+                ? es ? 'Aceptada' : 'Accepted'
+                : consent === 'denied'
+                  ? es ? 'Rechazada' : 'Rejected'
+                  : es ? 'Sin decidir' : 'Not decided'}
+            </strong>
+          </p>
+          {onOpenConsent && (
+            <button
+              type="button"
+              onClick={onOpenConsent}
+              className="px-4 py-2 rounded-xl border border-slate-700 bg-slate-950/70 text-slate-200 hover:border-cyan-500/60 hover:text-cyan-300 font-semibold transition"
+            >
+              {es ? 'Cambiar preferencia' : 'Change preference'}
+            </button>
+          )}
+        </div>
       </section>
 
       {/* Autor */}

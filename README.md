@@ -21,3 +21,13 @@ npm run audit:prod
 
 Cloudflare Workers con assets estáticos (`wrangler.json`, directorio `./dist`).
 Mantén `package.json` y `package-lock.json` sincronizados: el despliegue usa `npm ci`.
+
+## Seguridad
+
+- Cabeceras HTTP en `public/_headers` (HSTS, `X-Frame-Options`, COOP, `Permissions-Policy`, caché).
+- La CSP se despliega en modo informe (`Content-Security-Policy-Report-Only`): no bloquea nada y
+  solo avisa en la consola del navegador. Si tras navegar por toda la app (editor, bóveda, cámara,
+  exportaciones, «Acerca de») no aparece ningún aviso `[Report Only] Refused to…`, renombra la
+  cabecera a `Content-Security-Policy` para que pase a bloquear.
+- Si añades un script, fuente, imagen o `fetch` a un dominio nuevo, añádelo a la CSP.
+- El tracker de analítica solo se carga si el visitante lo acepta (`src/utils/analytics.ts`).

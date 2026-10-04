@@ -81,4 +81,7 @@ export interface VaultItem {
   purpose: string;
 }
 
+/** Datos de un documento del Vault que se muestran en la lista (sin la imagen completa). */
+export type VaultItemMeta = Omit<VaultItem, 'dataUrl'>;
+
 export type SupportedLanguage = 'es' | 'en';

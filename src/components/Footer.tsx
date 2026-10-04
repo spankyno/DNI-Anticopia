@@ -8,9 +8,11 @@ import { PWAInstallButton } from './PWAInstallButton';
 interface FooterProps {
   lang: SupportedLanguage;
   onNavigate: (tab: 'editor' | 'vault' | 'security' | 'about') => void;
+  onPrivacy: () => void;
+  onConsentPrefs: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
+export const Footer: React.FC<FooterProps> = ({ lang, onNavigate, onPrivacy, onConsentPrefs }) => {
   const t = translations[lang];
 
   return (
@@ -29,8 +31,8 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
             </div>
             <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
               {lang === 'es'
-                ? 'Protege tus documentos de identidad con marcas de agua anti-IA y censura de datos sensibles. Procesamiento 100% en cliente sin servidores.'
-                : 'Protect your identity documents with AI-resistant undulating watermarks and sensitive data redaction. 100% client-side zero-server execution.'}
+                ? 'Protege tus documentos de identidad con marcas de agua anti-IA y censura de datos sensibles. Tus documentos se procesan 100% en tu navegador.'
+                : 'Protect your identity documents with AI-resistant undulating watermarks and sensitive data redaction. Your documents are processed 100% in your browser.'}
             </p>
             <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-semibold pt-1">
               <Lock className="w-3.5 h-3.5" />
@@ -74,6 +76,22 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   className="hover:text-cyan-400 transition cursor-pointer"
                 >
                   {t.tabAbout}
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={onPrivacy}
+                  className="hover:text-cyan-400 transition cursor-pointer"
+                >
+                  {lang === 'es' ? 'Privacidad' : 'Privacy'}
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={onConsentPrefs}
+                  className="hover:text-cyan-400 transition cursor-pointer"
+                >
+                  {lang === 'es' ? 'Preferencias de analítica' : 'Analytics preferences'}
                 </button>
               </li>
             </ul>
