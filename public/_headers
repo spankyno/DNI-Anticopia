@@ -1,10 +1,27 @@
+# Cabeceras HTTP de Cloudflare Workers (static assets). Se aplican todas las reglas que casen.
+
 /*
   X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(self), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=()
+  # CSP en modo informe: no bloquea nada, solo avisa en la consola del navegador (DevTools > Console).
+  # Cuando no haya avisos, para BLOQUEAR cambia el nombre a:  Content-Security-Policy
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://aitors-hub-dashboard.asanchezgu.workers.dev; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' data: blob: https://aitors-hub-dashboard.asanchezgu.workers.dev; worker-src 'self'; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
 
+# Hashes en el nombre: se pueden cachear para siempre
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# El service worker y el manifiesto deben revalidarse siempre para que las actualizaciones (y los parches de seguridad) lleguen
+/sw.js
+  Cache-Control: no-cache
+/registerSW.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
 
 /sitemap.xml
   Content-Type: application/xml; charset=utf-8
