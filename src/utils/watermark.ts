@@ -68,6 +68,11 @@ export async function renderProtectedDocument({
     renderMoireInterference(ctx, config, width, height);
   }
 
+  // 4.3 Micropunteado: símbolos «@» diminutos en clotoides desde el centro
+  if (config.micropunteado) {
+    renderMicropunteado(ctx, config, width, height);
+  }
+
   // 5. Render Undulating Anti-AI Watermark Text & Wave Field
   renderUndulatingWatermark(ctx, config, width, height);
 
@@ -458,6 +463,135 @@ function renderSteganographicMicroprint(
     const offset = (r % 2 === 0) ? 0 : -fontSize * 8;
     const repeated = microText.repeat(8);
     ctx.fillText(repeated, offset, y);
+  }
+
+  ctx.restore();
+}
+
+/** Extensión del parámetro t que se dibuja (≈ 1,7 vueltas de tangente). */
+const CLOTHOID_T_MAX = 2.6;
+
+/**
+ * Radio máximo (distancia al origen) de la clotoide unitaria hasta CLOTHOID_T_MAX. La curva
+ * sobrepasa algo la distancia a su «ojo» (0.7071) antes de enroscarse, por eso se calcula.
+ */
+const CLOTHOID_UNIT_MAX_RADIUS = clothoidMaxRadius(CLOTHOID_T_MAX);
+
+function clothoidMaxRadius(tMax: number): number {
+  const dt = 0.0005;
+  let x = 0;
+  let y = 0;
+  let max = 0;
+  for (let i = 0, n = Math.ceil(tMax / dt); i < n; i++) {
+    const tMid = (i + 0.5) * dt;
+    const phase = (Math.PI * tMid * tMid) / 2;
+    x += Math.cos(phase) * dt;
+    y += Math.sin(phase) * dt;
+    max = Math.max(max, Math.hypot(x, y));
+  }
+  return max;
+}
+
+/**
+ * Puntos de media clotoide (espiral de Euler / de Cornu) equiespaciados por longitud de arco.
+ *
+ * La clotoide tiene curvatura proporcional al arco recorrido: arranca recta en el origen y se
+ * enrosca cada vez más. Con parámetro t:  x(t) = scale·∫cos(πu²/2)du,  y(t) = scale·∫sin(πu²/2)du
+ * (integrales de Fresnel). La velocidad es constante (= scale), así que la longitud de arco es
+ * scale·t. Se integra por la regla del punto medio.
+ *
+ * La curva completa (t de −tMax a tMax) es simétrica respecto al origen: una «S» que sale del
+ * centro en dos sentidos opuestos y se enrosca hacia dos «ojos» en (±0.5, ±0.5)·scale.
+ */
+export function clothoidHalfPath(
+  scale: number,
+  tMax: number,
+  spacing: number
+): { x: number; y: number; t: number }[] {
+  const points: { x: number; y: number; t: number }[] = [{ x: 0, y: 0, t: 0 }];
+  const dt = 0.0005;
+  const steps = Math.ceil(tMax / dt);
+  let x = 0;
+  let y = 0;
+  let sinceLast = 0;
+
+  for (let i = 0; i < steps; i++) {
+    const tMid = (i + 0.5) * dt;
+    const phase = (Math.PI * tMid * tMid) / 2;
+    const dx = Math.cos(phase) * dt * scale;
+    const dy = Math.sin(phase) * dt * scale;
+    x += dx;
+    y += dy;
+    sinceLast += scale * dt;
+    if (sinceLast >= spacing) {
+      sinceLast -= spacing;
+      points.push({ x, y, t: (i + 1) * dt });
+    }
+  }
+  return points;
+}
+
+/**
+ * Micropunteado: símbolos «@» muy pequeños (casi puntos de unos pocos píxeles) colocados a lo
+ * largo de clotoides que nacen en el centro del documento. Cada familia es una «S» (dos brazos
+ * opuestos); las familias se giran entre sí para repartir los brazos alrededor del centro.
+ */
+function renderMicropunteado(
+  ctx: CanvasRenderingContext2D,
+  config: WatermarkConfig,
+  width: number,
+  height: number
+) {
+  const level = config.subtletyLevel;
+  const families = level === 'subtle' ? 1 : level === 'intense' ? 3 : 2;
+  const baseAlpha = level === 'subtle' ? 0.55 : level === 'intense' ? 1 : 0.8;
+
+  // Tamaño del símbolo: unos pocos píxeles, proporcional a la resolución del documento
+  const glyph = Math.max(3, Math.min(7, Math.round(Math.min(width, height) / 190)));
+  const spacing = glyph * 2.4;
+
+  // La clotoide se escala para que su punto más lejano del centro quede cerca de las esquinas
+  const maxRadius = 0.5 * Math.hypot(width, height) * 0.92;
+  const scale = maxRadius / CLOTHOID_UNIT_MAX_RADIUS;
+  const half = clothoidHalfPath(scale, CLOTHOID_T_MAX, spacing);
+
+  const cx = width / 2;
+  const cy = height / 2;
+
+  ctx.save();
+  ctx.globalAlpha = config.opacity * baseAlpha;
+  ctx.font = `700 ${glyph}px "JetBrains Mono", monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  if (config.colorTheme === 'slate_mono' || config.grayscale) {
+    ctx.fillStyle = '#334155';
+  } else if (config.colorTheme === 'emerald_cyan') {
+    ctx.fillStyle = '#065f46';
+  } else if (config.colorTheme === 'red_amber') {
+    ctx.fillStyle = '#991b1b';
+  } else {
+    ctx.fillStyle = '#1e293b';
+  }
+
+  const margin = glyph;
+  for (let f = 0; f < families; f++) {
+    const theta = (f * Math.PI) / families;
+    const cos = Math.cos(theta);
+    const sin = Math.sin(theta);
+
+    for (let i = 0; i < half.length; i++) {
+      const rx = half[i].x * cos - half[i].y * sin;
+      const ry = half[i].x * sin + half[i].y * cos;
+
+      // sign=+1 → brazo t>0; sign=−1 → brazo t<0 (simétrico respecto al centro)
+      for (const sign of i === 0 ? [1] : [1, -1]) {
+        const px = cx + sign * rx;
+        const py = cy + sign * ry;
+        if (px < -margin || px > width + margin || py < -margin || py > height + margin) continue;
+        ctx.fillText('@', px, py);
+      }
+    }
   }
 
   ctx.restore();

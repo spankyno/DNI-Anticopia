@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SupportedLanguage } from '../types';
 import { translations } from '../utils/translations';
 import { ShieldCheck, Lock, Cpu, AlertTriangle, CheckCircle2, ShieldAlert, Heart, ExternalLink, Globe, FileCheck, Sparkles, BookOpen, LayoutGrid, Mail, User } from 'lucide-react';
@@ -15,6 +15,8 @@ interface AboutViewProps {
 export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor, consent = null, onOpenConsent }) => {
   const t = translations[lang];
   const es = lang === 'es';
+  // Si public/og-image.png no existe, el bloque de imagen se oculta solo
+  const [ogFailed, setOgFailed] = useState(false);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-12 text-slate-200">
@@ -22,7 +24,8 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor, 
       <div className="relative rounded-3xl border border-slate-800 bg-gradient-to-br from-[#0c1427] via-[#090d16] to-[#131124] p-8 sm:p-12 overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-2xl">
+        <div className={`relative z-10 ${ogFailed ? '' : 'lg:grid lg:grid-cols-5 lg:gap-8 lg:items-center'}`}>
+        <div className={ogFailed ? 'max-w-2xl' : 'lg:col-span-3'}>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-950/60 text-cyan-300 text-xs font-semibold mb-4">
             <ShieldCheck className="w-4 h-4 text-cyan-400" />
             <span>{lang === 'es' ? 'Compromiso de Privacidad y Ciberseguridad' : 'Privacy & Cybersecurity Commitment'}</span>
@@ -43,6 +46,24 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor, 
             <ShieldCheck className="w-4 h-4" />
             <span>{t.ctaProtect}</span>
           </button>
+        </div>
+
+        {!ogFailed && (
+          <figure className="mt-8 lg:mt-0 lg:col-span-2">
+            <img
+              src="/og-image.png"
+              alt={es ? 'DNI Anticopia: marca de agua ondulada anti-IA sobre un DNI' : 'DNI Anticopia: anti-AI undulating watermark over an ID card'}
+              width={1200}
+              height={630}
+              decoding="async"
+              onError={() => setOgFailed(true)}
+              className="w-full h-auto rounded-2xl border border-slate-700 shadow-2xl shadow-cyan-500/10"
+            />
+            <figcaption className="mt-2 text-[11px] text-slate-500 text-center">
+              {es ? 'Marca de agua ondulada anti-IA aplicada a un documento de identidad' : 'Anti-AI undulating watermark applied to an identity document'}
+            </figcaption>
+          </figure>
+        )}
         </div>
       </div>
 
@@ -153,7 +174,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor, 
               <span>{lang === 'es' ? 'Nuevas Capas Sutiles de Seguridad Documental (Inspiradas en Billetes y Saferlayer)' : 'Subtle Document Security Layers'}</span>
             </h4>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
                 <span className="font-bold text-cyan-300 block mb-1">Micro-impresión Esteganográfica</span>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
@@ -172,6 +193,17 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor, 
                 <span className="font-bold text-indigo-300 block mb-1">Relieve de Agua 3D</span>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
                   Variación sutil de gradientes de luz y sombra (filtro de relieve refractivo) que añade una marca táctil digital oficial sin impedir la lectura de los datos por ojos humanos.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span className="font-bold text-amber-300 block mb-1">
+                  {es ? 'Micropunteado en Clotoide' : 'Clothoid Micro-dotting'}
+                </span>
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  {es
+                    ? 'Símbolos «@» de pocos píxeles, casi puntos, dispuestos a lo largo de clotoides (espiral de Euler) que nacen en el centro del documento. Es una trama punteada imperceptible a simple vista que se extiende por todo el documento y dificulta su limpieza o regeneración automática.'
+                    : 'Tiny “@” symbols a few pixels wide, almost dots, laid along clothoids (Euler spirals) that start at the centre of the document. A dotted pattern that is imperceptible at a glance, spreads across the whole document and makes automatic clean-up or regeneration harder.'}
                 </p>
               </div>
             </div>
@@ -245,6 +277,54 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onNavigateToEditor, 
             ? 'Cuando editas una foto en un editor genérico (como la app de fotos del móvil), muchas veces la marca de agua solo cubre una pequeña esquina o deja intactos los metadatos EXIF. Además, las líneas rectas simples son triviales de eliminar con un borrador mágico de un smartphone moderno. DNI Anticopia aplica matemáticas de ondulación vectoriales continuas y exporta un archivo aplanado sin metadatos residuales, lo que desalienta su reutilización.'
             : 'Standard phone markup tools draw simple flat strokes that modern phone AI can remove in 1 tap. DNI Anticopia flattens continuous vector ripples across the entirety of the document and strips residual metadata.'}
         </p>
+      </section>
+
+      {/* Novedades y mejoras */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">{es ? 'Novedades y mejoras' : 'What’s new'}</h2>
+            <p className="text-xs text-slate-400">
+              {es ? 'Seguridad, privacidad y protección del documento' : 'Security, privacy and document protection'}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          {(es
+            ? [
+                ['Micropunteado en clotoide', 'Nueva capa anti-IA: símbolos «@» diminutos en espirales de Euler desde el centro del documento.'],
+                ['Bóveda cifrada', 'Tus copias se guardan cifradas (AES-256-GCM, clave derivada con PBKDF2) y se bloquean solas a los 5 minutos.'],
+                ['Censura irreversible', 'El estilo «blur» ya no conserva detalle de la imagen original: del contenido tapado solo sobrevive un color medio.'],
+                ['PDF sin metadatos', 'Las exportaciones PDF no incluyen herramienta ni fechas de creación.'],
+                ['Subidas validadas', 'Se comprueba el formato real, el tamaño y las dimensiones; los nombres de archivo se sanean y no se pisan en el ZIP.'],
+                ['Cámara segura', 'La cámara se apaga siempre al cerrarla, incluso si el permiso llega tarde.'],
+                ['Privacidad con consentimiento', 'Analítica de visitas opcional, sin cookies y solo si la aceptas. Fuentes alojadas en la propia app, sin conexión a Google.'],
+                ['Blindaje del sitio', 'Cabeceras de seguridad y política de contenido (CSP) estricta; funciona sin conexión como app instalable.'],
+              ]
+            : [
+                ['Clothoid micro-dotting', 'New anti-AI layer: tiny “@” symbols along Euler spirals starting at the centre of the document.'],
+                ['Encrypted vault', 'Your copies are stored encrypted (AES-256-GCM, PBKDF2-derived key) and lock themselves after 5 minutes.'],
+                ['Irreversible redaction', 'The “blur” style no longer keeps detail from the original image: only an average colour survives from the covered content.'],
+                ['Metadata-free PDF', 'PDF exports carry no tool name or creation dates.'],
+                ['Validated uploads', 'Real format, size and dimensions are checked; file names are sanitised and never overwrite each other in the ZIP.'],
+                ['Safe camera', 'The camera always switches off when closed, even if the permission arrives late.'],
+                ['Consent-based privacy', 'Optional visit analytics, no cookies and only if you accept. Fonts served from the app itself, no connection to Google.'],
+                ['Hardened site', 'Security headers and a strict Content Security Policy; works offline as an installable app.'],
+              ]
+          ).map(([title, text]) => (
+            <div key={title} className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-white block mb-0.5">{title}</span>
+                <p className="text-slate-400 text-[11px] leading-relaxed">{text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Privacidad y datos */}

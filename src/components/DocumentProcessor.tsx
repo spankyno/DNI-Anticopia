@@ -80,6 +80,7 @@ const DEFAULT_CONFIG: WatermarkConfig = {
   moireInterference: true,
   steganographicMicroprint: true,
   subtleEmboss: false,
+  micropunteado: false,
   stampBorder: false,
   subtletyLevel: 'balanced',
 };
@@ -929,7 +930,7 @@ export const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                         />
                         <div>
                           <span className="font-semibold block">{t.steganographicLabel}</span>
-                          <span className="text-[10px] text-slate-400 block">Micro-texto continuo que imposibilita la clonación por IA</span>
+                          <span className="text-[10px] text-slate-400 block">Micro-texto continuo que dificulta la clonación por IA</span>
                         </div>
                       </label>
 
@@ -972,6 +973,20 @@ export const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                         <div>
                           <span className="font-semibold block">{t.embossLabel}</span>
                           <span className="text-[10px] text-slate-400 block">Sello óptico de agua en relieve táctil 3D</span>
+                        </div>
+                      </label>
+
+                      {/* 6. Micropunteado en clotoide */}
+                      <label className="flex items-start gap-2 text-slate-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={activeDoc.config.micropunteado}
+                          onChange={(e) => updateActiveConfig({ micropunteado: e.target.checked })}
+                          className="mt-0.5 rounded text-cyan-500 focus:ring-0 cursor-pointer"
+                        />
+                        <div>
+                          <span className="font-semibold block">{t.micropunteadoLabel}</span>
+                          <span className="text-[10px] text-slate-400 block">{t.micropunteadoHint}</span>
                         </div>
                       </label>
                     </div>

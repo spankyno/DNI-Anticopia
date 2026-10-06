@@ -50,6 +50,8 @@ export interface WatermarkConfig {
   moireInterference: boolean;
   steganographicMicroprint: boolean;
   subtleEmboss: boolean;
+  /** Símbolos «@» diminutos dispuestos en clotoides que nacen en el centro del documento. */
+  micropunteado: boolean;
   stampBorder: boolean;
   subtletyLevel: 'subtle' | 'balanced' | 'intense';
 }
